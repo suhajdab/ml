@@ -2,10 +2,12 @@ var http = require( 'http' ),
 	server = http.createServer( handleRequest ),
 	Brain = require( 'brain' ),
 	brain = new Brain.NeuralNetwork(),
+	trainingSize = 10000,
 	trainingData = [],
 	trainingResult;
 
-for ( var i = 0; i < 1000; i++ ) {
+// train by generating random dates
+for ( var i = 0; i < trainingSize; i++ ) {
 	var year = Math.ceil( Math.random() * 2000 ),
 		month = Math.ceil( Math.random() * 11 ),
 		day = Math.ceil( Math.random() * 31 ),
@@ -21,22 +23,28 @@ for ( var i = 0; i < 1000; i++ ) {
 trainingResult = brain.train( trainingData );
 console.log( trainingData, trainingResult );
 
+function parseUrl( url ) {
+	var dateStr = url.replace( "/", "" );
+	return new Date( dateStr );
+}
+
 function getDateObject( d ) {
 	return {
-		day: d.getDate() / 31,
-		weekday: d.getDay() / 7,
-		month: d.getMonth() / 12
+		day: d.getDate() / 100,
+		weekday: d.getDay() / 10,
+		month: d.getMonth() / 100,
+		year: d.getFullYear() / 10000
 	};
 }
 
+
 function handleRequest( request, response ) {
-	console.log( request.url )
-	var dateStr = request.url.replace( "/", "" ),
-		d = new Date( dateStr ),
-		weekend = brain.run( getDateObject( d ) ),
+	var date = parseUrl( request.url ),
+		formatted = getDateObject( date ),
+		weekend = brain.run( formatted ),
 		json = {
 			weekend: weekend,
-			date: getDateObject( d )
+			date: getDateObject( date )
 		};
 
 	response.end( JSON.stringify( json ) );
